@@ -1,0 +1,562 @@
+﻿using System.Net;
+using System.Runtime.CompilerServices;
+
+internal class Program
+{
+    static void Main(string[] args)
+    {
+        // initialize variable
+        string menoHraca1;
+        string menoHraca2;
+        int velkostPlochy = 1;
+
+        Console.WriteLine("Vitaj v hre piskvorky!");
+        Console.Write("Zadajte meno hraca 1: ");
+        menoHraca1 = zadajString();
+        Console.Write("Zadajte meno hraca 2: ");
+        menoHraca2 = zadajString();
+        Console.Write("Zadajte velkost hracej plochy: ");
+        velkostPlochy = zadajCislo();
+
+        // create array of size of velkostPlochy
+        var plocha = new char[velkostPlochy, velkostPlochy];
+        // fill game board with empty spaces
+        for (int i=0; i < plocha.GetLength(1); i++)
+            for (int j=0; j < plocha.GetLength(0); j++)
+                plocha[i, j] = ' ';
+
+        // create two players, usable by functions
+        Hrac hrac1 = new Hrac(menoHraca1, 'X'); 
+        Hrac hrac2 = new Hrac(menoHraca2, 'O');
+
+        // create game
+        int stavHry = 0; // game condition
+
+        // initialize coordinates
+        int riadok = 0;
+        int stlpec = 0;
+
+        // initialize counters
+        int pocetZnakov;
+        int pocetCelkovy;
+        bool kontrola = true;
+
+        while (stavHry == 0)
+        {
+            ZobrazPlochu(plocha);
+            Console.WriteLine("Na tahu je hrac {0}", hrac1.menoHraca);
+
+            // ai to play the move
+            if (hrac1.menoHraca == "pc")
+                aiHraje();
+            else
+            {
+                // enter coordinates until correctly entered
+                riadok = 0;
+                stlpec = 0;
+                bool spravneZadal = true;
+                do
+                {
+                    Console.Write("Zadajte suradnice - riadok: ");
+                    riadok = zadajCislo() - 1;
+                    Console.Write("Zadajte suradnice - stlpec: ");
+                    stlpec = zadajCislo() - 1;                
+                    // check if the field is empty
+                    if (plocha[riadok, stlpec] == ' ')
+                    {
+                        plocha[riadok, stlpec] = hrac1.znak;
+                        spravneZadal = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Pole je obsadene!");
+                        spravneZadal = false;
+                    }
+                } while (!spravneZadal);
+            }
+
+            // check for winning condition
+            // start from current position
+            pocetCelkovy = 1;
+            // check horizontal, consider borders first then valid position
+
+            // to the left
+            pocetZnakov = 1;
+            kontrola = true;
+            while (kontrola)
+            {
+                if ((stlpec - pocetZnakov) >= 0)
+                {
+                    if (plocha[riadok, stlpec - pocetZnakov] == hrac1.znak)
+                    {
+                        pocetZnakov++;
+                        pocetCelkovy++;
+                    }
+                    else
+                        kontrola = false;
+                }
+                else
+                    kontrola = false;
+            }
+            // to the right
+            pocetZnakov = 1;
+            kontrola = true;
+            while (kontrola)
+            {
+                if ((stlpec + pocetZnakov) < plocha.GetLength(1))
+                {
+                    if (plocha[riadok, stlpec + pocetZnakov] == hrac1.znak)
+                    {
+                        pocetZnakov++;
+                        pocetCelkovy++;
+                    }
+                    else
+                        kontrola = false;
+                }
+                else
+                    kontrola = false;
+            }
+            // check if horizontal winning condition is met
+            if (pocetCelkovy >= 5)
+            {
+                ZobrazPlochu(plocha);
+                Console.WriteLine("Hrac {0} vyhral!", hrac1.menoHraca);
+                stavHry = 1;
+            }
+            else
+            {
+                // check vertical
+                pocetCelkovy = 1;
+                // to the top
+                pocetZnakov = 1;
+                kontrola = true;
+                while (kontrola)
+                {
+                    if ((riadok - pocetZnakov) >= 0)
+                    {
+                        if (plocha[riadok - pocetZnakov, stlpec] == hrac1.znak)
+                        {
+                            pocetZnakov++;
+                            pocetCelkovy++;
+                        }
+                        else
+                            kontrola = false;
+                    }
+                    else
+                        kontrola = false;
+                }
+
+                // to the bottom
+                pocetZnakov = 1;
+                kontrola = true;
+                while (kontrola)
+                {
+                    if ((riadok + pocetZnakov) < plocha.GetLength(0))
+                    {
+                        if (plocha[riadok + pocetZnakov, stlpec] == hrac1.znak)
+                        {
+                            pocetZnakov++;
+                            pocetCelkovy++;
+                        }
+                        else
+                            kontrola = false;
+                    }
+                    else
+                        kontrola = false;
+                }
+                // check if vertical winning condition is set
+                if (pocetCelkovy >= 5)
+                {
+                    ZobrazPlochu(plocha);
+                    Console.WriteLine("Hrac {0} vyhral!", hrac1.menoHraca);
+                    stavHry = 1;
+                }
+                else
+                {
+                    // check diagonal - left top to right bottom
+                    pocetCelkovy = 1;
+                    // 1st diagonal
+                    pocetZnakov = 1;
+                    kontrola = true;
+                    while(kontrola)
+                    {
+                        if (((riadok - pocetZnakov) >= 0) && ((stlpec - pocetZnakov) >= 0))
+                        {
+                            if (plocha[riadok - pocetZnakov, stlpec - pocetZnakov] == hrac1.znak)
+                            {
+                                pocetZnakov++;
+                                pocetCelkovy++;
+                            }
+                            else
+                                kontrola = false;
+                        }
+                        else
+                            kontrola = false;
+                    }
+
+                    // 1st diagonal opposite direction
+                    pocetZnakov = 1;
+                    kontrola = true;
+                    while (kontrola)
+                    {
+                        if (((riadok + pocetZnakov) < plocha.GetLength(0)) && ((stlpec + pocetZnakov) < plocha.GetLength(1)))
+                        {
+                            if (plocha[riadok + pocetZnakov, stlpec + pocetZnakov] == hrac1.znak)
+                            {
+                                pocetZnakov++;
+                                pocetCelkovy++;
+                            }
+                            else
+                                kontrola = false;
+                        }
+                        else
+                            kontrola = false;
+                    }
+
+                    // check for 1st diagonal winning condition
+                    if (pocetCelkovy >= 5)
+                    {
+                        ZobrazPlochu(plocha);
+                        Console.WriteLine("Hrac {0} vyhral!", hrac1.menoHraca);
+                        stavHry = 1;
+                    }
+                    else
+                    {
+                        // check diagonal - left bottom to right top
+                        pocetCelkovy = 1;
+
+                        // 2nd diagonal check
+                        pocetZnakov = 1;
+                        kontrola = true;
+                        while(kontrola)
+                        {
+                            if (((riadok + pocetZnakov) < plocha.GetLength(0)) && ((stlpec - pocetZnakov) >= 0))
+                            {
+                                if (plocha[riadok + pocetZnakov, stlpec - pocetZnakov] == hrac1.znak)
+                                {
+                                    pocetZnakov++;
+                                    pocetCelkovy++;
+                                }
+                                else 
+                                    kontrola = false;
+                            }
+                            else
+                                kontrola=false;
+                        }
+
+                        // 2nd diagonal opposite direction
+                        pocetZnakov = 1;
+                        kontrola = true;
+                        while(kontrola)
+                        {
+                            if (((riadok - pocetZnakov) > 0) && ((stlpec + pocetZnakov) < plocha.GetLength(1)))
+                            {
+                                if (plocha[riadok - pocetZnakov, stlpec + pocetZnakov] == hrac1.znak)
+                                {
+                                    pocetZnakov++;
+                                    pocetCelkovy++;
+                                }
+                                else 
+                                    kontrola = false;
+                            }
+                            else
+                                kontrola = false;
+                        }
+                        
+                        // check 2nd diagonal winning condition
+                        if (pocetCelkovy >= 5)
+                        {
+                            ZobrazPlochu(plocha);
+                            Console.WriteLine("Hrac {0} vyhral!", hrac1.menoHraca);
+                            stavHry = 1;
+                        }
+                    }
+                }
+            }
+            // if no winning condition, change player
+            if (stavHry == 0)
+            {
+                var temp = hrac1;
+                hrac1 = hrac2;
+                hrac2 = temp;
+            }
+
+            Console.WriteLine("Kontrolny vypocet:");
+            Console.Write("Horizontalne = ");
+            skontroluj(1, 0);
+            Console.WriteLine(pocetCelkovy);
+            Console.Write("Vertikalne = ");
+            skontroluj(0, 1);
+            Console.WriteLine(pocetCelkovy);
+            Console.Write("Diagonalne 1 = ");
+            skontroluj(1, 1);
+            Console.WriteLine(pocetCelkovy);
+            Console.Write("Diagonalne 2 = ");
+            skontroluj(1, -1);
+            Console.WriteLine(pocetCelkovy);
+        }
+
+        void skontroluj(int ciRiadok, int ciStlpec)
+        {
+            // check diagonal - left top to right bottom
+            pocetCelkovy = 1;
+            // 1st diagonal
+            pocetZnakov = 1;
+            kontrola = true;
+            while (kontrola)
+            {
+                if (((riadok - pocetZnakov * ciRiadok) >= 0) && ((stlpec - pocetZnakov * ciStlpec) >= 0))
+                {
+                    if (plocha[riadok - pocetZnakov * ciRiadok, stlpec - pocetZnakov * ciStlpec] == hrac1.znak)
+                    {
+                        pocetZnakov++;
+                        pocetCelkovy++;
+                    }
+                    else
+                        kontrola = false;
+                }
+                else
+                    kontrola = false;
+            }
+
+            // 1st diagonal opposite direction
+            pocetZnakov = 1;
+            kontrola = true;
+            while (kontrola)
+            {
+                if (((riadok + pocetZnakov * ciRiadok) < plocha.GetLength(0)) && ((stlpec + pocetZnakov * ciStlpec) < plocha.GetLength(1)))
+                {
+                    if (plocha[riadok + pocetZnakov * ciRiadok, stlpec + pocetZnakov * ciStlpec] == hrac1.znak)
+                    {
+                        pocetZnakov++;
+                        pocetCelkovy++;
+                    }
+                    else
+                        kontrola = false;
+                }
+                else
+                    kontrola = false;
+            }
+
+        }
+
+        void aiHraje()
+        {
+            // TODO
+            // 1. check if there is a winning move
+            // 2. check if there is a blocking move
+            // 3. check if there is a move that creates a fork (two winning ways), also winning - 1 (set of 4)
+            // 4. check if there is a move that blocks a fork (two winning ways), also blocking - 1 (set of 4)
+            // 5. check if there is a move that creates winning - 2 (set of 3)
+            // 6. check if there is a move that blocks winning - 2 (set of 3)
+            // 7. check if there is a move that creates winning - 3 (set of 2)
+            // 8. check if there is a move that blocks winning - 3 (set of 2)
+            // 9. check for the best position - to decide between equal moves 
+
+            // 1. check if there is a winning move
+            // for every field on the board check if there is a winning move
+            // if there is, make the move
+            // if there is not, continue with the next step
+            for (int i = 0; i < plocha.GetLength(0); i++)
+            {
+                for (int j = 0; j < plocha.GetLength(1); j++)
+                {
+                    if (plocha[i, j] == ' ')
+                    {
+                        // check horizontal
+                        int pocetZnakov = 1;
+                        int pocetCelkovy = 1;
+                        bool kontrola = true;
+                        while (kontrola)
+                        {
+                            if ((j - pocetZnakov) >= 0)
+                            {
+                                if (plocha[i, j - pocetZnakov] == hrac1.znak)
+                                {
+                                    pocetZnakov++;
+                                    pocetCelkovy++;
+                                }
+                                else
+                                    kontrola = false;
+                            }
+                            else
+                                kontrola = false;
+                        }
+                        // check horizontal opposite direction
+                        pocetZnakov = 1;
+                        kontrola = true;
+                        while (kontrola)
+                        {
+                            if ((j + pocetZnakov) < plocha.GetLength(1))
+                            {
+                                if (plocha[i, j + pocetZnakov] == hrac1.znak)
+                                {
+                                    pocetZnakov++;
+                                    pocetCelkovy++;
+                                }
+                                else
+                                    kontrola = false;
+                            }
+                            else
+                                kontrola = false;
+                        }
+                        // check if horizontal winning condition is set
+                        if (pocetCelkovy >= 5)
+                        {
+                            plocha[i, j] = hrac1.znak;
+                            return;
+                        }
+                        else
+                        {
+                            // check vertical
+                            pocetCelkovy = 1;
+                            pocetZnakov = 1;
+                            kontrola = true;
+                            while (kontrola)
+                            {
+                                if ((i - pocetZnakov) >= 0)
+                                {
+                                    if (plocha[i - pocetZnakov, j] == hrac1.znak)
+                                    {
+                                        pocetZnakov++;
+                                        pocetCelkovy++;
+                                    }
+                                    else
+                                        kontrola = false;
+                                }
+                                else
+                                    kontrola = false;
+                            }
+                            // check vertical opposite direction
+                            pocetZnakov = 1;
+                            kontrola = true;
+                            while (kontrola)
+                            {
+                                if ((i + pocetZnakov) < plocha.GetLength(1))
+                                {
+                                    if (plocha[i + pocetZnakov, j] == hrac1.znak)
+                                    {
+                                        pocetZnakov++;
+                                        pocetCelkovy++;
+                                    }
+                                    else
+                                        kontrola = false;
+                                }
+                                else
+                                    kontrola = false;
+                            }
+                            // check if vertical winning condition is set
+                            if (pocetCelkovy >= 5)
+                            {
+                                plocha[i, j] = hrac1.znak;
+                                return;
+                            }
+                            else
+                            {
+                                // to do
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        }
+
+        // string entry
+        string zadajString()
+        {
+            bool kontrolaVstupu = true;
+            string vstup = "";
+            while (kontrolaVstupu)
+            {
+                vstup = Console.ReadLine();
+                if (vstup == "")
+                {
+                    Console.WriteLine("Zadajte prosím neprázdny reťazec znakov.");
+                }
+                else
+                {
+                    // check if all characters are letters
+                    for (int i = 0; i < vstup.Length; i++)
+                    {
+                        if (!char.IsLetter(vstup[i]))
+                        {
+                            Console.WriteLine("Zadajte prosím reťazec znakov obsahujúci iba písmená.");
+                        }
+                        else
+                        {
+                            kontrolaVstupu = false;
+                        }
+                    }
+                }
+            }
+            return vstup;
+        }
+
+        // digit entry
+        int zadajCislo()
+        {
+            bool kontrolaVstupu = true;
+            int vstup = 0;
+            while (kontrolaVstupu)
+            {
+                try
+                {
+                    vstup = int.Parse(Console.ReadLine());
+                    kontrolaVstupu = false;
+                }
+                catch (FormatException)
+                {
+                    Console.WriteLine("Zadajte prosím celé číslo.");
+                }
+            }
+            return vstup;
+        }
+    }
+
+    static void ZobrazPlochu(char[,] plocha)
+    {
+        // show column numbers
+        Console.Write("   "); // leading space for row numbers
+        for (int i = 0; i < plocha.GetLength(1); i++)
+        {
+            Console.Write(i + 1);
+            Console.Write(" ");
+            if (i < 9)
+            {
+                Console.Write(" ");
+            }
+        }
+        Console.WriteLine();
+        // show rows
+        for (int i = 0; i < plocha.GetLength(0); i++)
+        {
+            Console.Write(i + 1);
+            Console.Write(" ");
+            if (i < 9)
+            {
+                Console.Write(" ");
+            }
+            for (int j = 0; j < plocha.GetLength(1); j++)
+            {
+                Console.Write(plocha[i, j] + "  ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    public class Hrac
+    {
+        public string menoHraca;
+        public char znak;
+
+        public Hrac(string meno, char v)
+        {
+            this.menoHraca = meno;
+            this.znak = v;
+        }
+    }
+
+}
+
